@@ -7,7 +7,7 @@
 
 Стек: Python 3.13+, Django 6.0, PostgreSQL 17, HTML/CSS/JS, Chart.js, Docker Compose.
 
-Опубликовано: https://rental.37.194.184.235.sslip.io
+Опубликовано: https://rental.37.194.184.235.sslip.io · Репозиторий: https://github.com/HackDanel/equipment-rental (приватный)
 
 ## Документация
 

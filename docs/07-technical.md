@@ -13,6 +13,7 @@
 | Клиентская часть | HTML5, CSS3 без фреймворков, JavaScript ES2020, Chart.js 4.4 |
 | Объём исходного кода | ≈ 2 500 строк Python (без тестов и миграций), ≈ 930 строк тестов, ≈ 1 260 строк шаблонов, CSS и JS |
 | Зависимости | `requirements.txt`: Django, psycopg 3, Pillow, Gunicorn, WhiteNoise |
+| Репозиторий | https://github.com/HackDanel/equipment-rental (приватный) |
 
 ## 7.2. Модули
 
