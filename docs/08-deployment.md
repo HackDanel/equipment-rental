@@ -37,7 +37,7 @@
    ```sh
    sudo cp ~/rental/apache-rental.conf /etc/apache2/sites-available/zz-rental.conf
    sudo a2ensite zz-rental && sudo apache2ctl configtest && sudo systemctl reload apache2
-   sudo certbot --apache -d rental.37.194.184.235.sslip.io
+   sudo /snap/bin/certbot --apache -d rental.37.194.184.235.sslip.io
    ```
 
 3. Создать администратора **или** загрузить демо-данные:
@@ -89,7 +89,7 @@ docker compose start web
 | Логи приложения | `ssh b450-remote 'cd rental && docker compose logs --tail 100 web'` |
 | Ответ приложения в обход Apache | `ssh b450-remote 'curl -sI -H "Host: rental.37.194.184.235.sslip.io" http://127.0.0.1:8210/'` |
 | Логи Apache | `/var/log/apache2/rental-error.log`, `rental-access.log` |
-| Срок сертификата | `sudo certbot certificates` |
+| Срок сертификата | `sudo /snap/bin/certbot certificates` (certbot стоит через snap, `/snap/bin` нет в `secure_path` у sudo) |
 
 | Симптом | Причина и решение |
 |---|---|
