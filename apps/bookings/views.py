@@ -62,7 +62,8 @@ def _get_visible(request, pk):
 @login_required
 def detail(request, pk):
     booking = _get_visible(request, pk)
-    ctx = {'b': booking, 'is_staff': not request.user.is_client}
+    ctx = {'b': booking, 'is_staff': not request.user.is_client,
+           'late_fee': services.late_fee(booking) if booking.is_overdue else 0}
     if ctx['is_staff']:
         if booking.status == Status.NEW:
             ctx['reject_form'] = RejectForm()
@@ -71,7 +72,6 @@ def detail(request, pk):
             ctx['can_issue_today'] = booking.start_date <= timezone.localdate() <= booking.end_date
         if booking.status == Status.ISSUED:
             ctx['return_form'] = ReturnForm(booking=booking)
-            ctx['late_fee'] = services.late_fee(booking)
     return render(request, 'bookings/detail.html', ctx)
 
 
