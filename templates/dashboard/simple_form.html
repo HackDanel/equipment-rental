@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{% include 'dashboard/_subnav.html' %}
+<div class="narrow card">
+  <p class="small"><a href="{% url back %}">← Назад</a></p>
+  <h1>{{ title }}</h1>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form }}
+    <button class="btn">Сохранить</button>
+  </form>
+</div>
+{% endblock %}

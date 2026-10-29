@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Оборудование{% endblock %}
+{% block content %}
+{% include 'dashboard/_subnav.html' %}
+<div class="page-head">
+  <h1>Оборудование</h1>
+  <a class="btn btn--hivis" href="{% url 'dashboard:equipment_new' %}">+ Новая позиция</a>
+</div>
+<form method="get" class="row-form" style="margin-bottom:18px"><input type="search" name="q" value="{{ q }}" placeholder="Название"><button class="btn btn--small">Найти</button></form>
+<div class="table-wrap cards">
+<table>
+  <thead><tr><th>Название</th><th>Категория</th><th class="num">Цена/сутки</th><th class="num">Залог</th><th class="num">Экземпляров</th><th class="num">Броней</th><th>В каталоге</th></tr></thead>
+  <tbody>
+  {% for e in items %}
+    <tr>
+      <td data-label="Название"><a href="{% url 'dashboard:equipment_edit' e.pk %}">{{ e.name }}</a></td>
+      <td data-label="Категория">{{ e.category }}</td>
+      <td data-label="Цена/сутки" class="num">{{ e.price_per_day|floatformat:"0g" }} ₽</td>
+      <td data-label="Залог" class="num">{{ e.deposit|floatformat:"0g" }} ₽</td>
+      <td data-label="Экземпляров" class="num">{% if e.working %}{{ e.working }}{% else %}<span class="badge badge--damaged">0</span>{% endif %}</td>
+      <td data-label="Броней" class="num">{{ e.bookings_n }}</td>
+      <td data-label="В каталоге">{% if e.is_active %}да{% else %}<span class="muted">скрыто</span>{% endif %}</td>
+    </tr>
+  {% empty %}<tr><td colspan="7" class="muted">Нет позиций.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

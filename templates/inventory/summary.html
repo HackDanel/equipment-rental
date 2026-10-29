@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Склад{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><p class="eyebrow">Учёт склада</p><h1>Склад</h1><p class="muted">Экземпляры по позициям каталога. Повреждённые при возврате автоматически уходят в ремонт.</p></div>
+  <a class="btn btn--ghost" href="{% url 'inventory:units' %}">Все экземпляры</a>
+</div>
+<div class="table-wrap cards">
+<table>
+  <thead><tr><th>Оборудование</th><th class="num">На складе</th><th class="num">Выдано</th><th class="num">В ремонте</th><th class="num">Списано</th>{% if user.is_admin_role %}<th>Поступление</th>{% endif %}</tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td data-label="Оборудование"><a href="{% url 'inventory:units' %}?equipment={{ r.pk }}">{{ r.name }}</a><br><span class="muted small">{{ r.category }}</span></td>
+      <td data-label="На складе" class="num">{{ r.in_stock }}</td>
+      <td data-label="Выдано" class="num">{{ r.rented }}</td>
+      <td data-label="В ремонте" class="num">{% if r.repair %}<a href="{% url 'inventory:units' %}?equipment={{ r.pk }}&status=repair">{{ r.repair }}</a>{% else %}0{% endif %}</td>
+      <td data-label="Списано" class="num">{{ r.written_off }}</td>
+      {% if user.is_admin_role %}
+      <td data-label="Поступление">
+        <form method="post" action="{% url 'inventory:add_units' r.pk %}" class="row-form">{% csrf_token %}
+          <input type="number" name="count" value="1" min="1" max="100" aria-label="Количество"><input type="hidden" name="condition" value="excellent">
+          <button class="btn btn--small btn--ghost">+ добавить</button></form>
+      </td>
+      {% endif %}
+    </tr>
+  {% empty %}<tr><td colspan="6" class="muted">Каталог пуст.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

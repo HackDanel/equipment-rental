@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}{% if obj %}{{ obj }}{% else %}Новое оборудование{% endif %}{% endblock %}
+{% block content %}
+{% include 'dashboard/_subnav.html' %}
+<p class="small"><a href="{% url 'dashboard:equipment' %}">← Оборудование</a></p>
+<div class="split">
+  <section class="card">
+    <h1>{% if obj %}{{ obj }}{% else %}Новое оборудование{% endif %}</h1>
+    {% if obj and obj.photo %}<img src="{{ obj.photo.url }}" alt="" style="max-width:220px;border-radius:8px;margin-bottom:14px">{% endif %}
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {{ form }}
+      <div class="actions"><button class="btn">Сохранить</button>{% if obj %}<a href="{% url 'catalog:detail' obj.pk %}">Открыть в каталоге</a>{% endif %}</div>
+    </form>
+  </section>
+  {% if obj %}
+  <aside class="stack sticky">
+    <section class="card">
+      <h2>Экземпляры на складе</h2>
+      <form method="post" action="{% url 'inventory:add_units' obj.pk %}" class="row-form">{% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        {{ add_form.count }}{{ add_form.condition }}<button class="btn btn--small">Добавить</button>
+      </form>
+      <ul style="padding-left:18px">{% for u in units %}<li><a class="mono" href="{% url 'inventory:unit' u.pk %}">{{ u.inventory_number }}</a> — <span class="badge badge--{{ u.status }}">{{ u.get_status_display }}</span></li>{% empty %}<li class="muted">Пока нет экземпляров.</li>{% endfor %}</ul>
+    </section>
+  </aside>
+  {% endif %}
+</div>
+{% endblock %}

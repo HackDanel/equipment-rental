@@ -1,0 +1,9 @@
+{% with p=request.path %}
+<nav class="chips" aria-label="Разделы управления">
+  <a class="chip{% if '/panel/equipment/' in p %} is-active{% endif %}" href="{% url 'dashboard:equipment' %}">Оборудование</a>
+  <a class="chip{% if '/panel/categories/' in p %} is-active{% endif %}" href="{% url 'dashboard:categories' %}">Категории</a>
+  <a class="chip{% if '/panel/tariffs/' in p %} is-active{% endif %}" href="{% url 'dashboard:tariffs' %}">Тарифы и правила</a>
+  <a class="chip{% if '/panel/staff/' in p %} is-active{% endif %}" href="{% url 'dashboard:staff' %}">Сотрудники</a>
+  <a class="chip{% if '/panel/users/' in p %} is-active{% endif %}" href="{% url 'dashboard:users' %}">Клиенты</a>
+</nav>
+{% endwith %}

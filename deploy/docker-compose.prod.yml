@@ -1,0 +1,46 @@
+# Production stack: запускается deploy.sh из каталога, где лежат этот файл (как docker-compose.yml),
+# .env и src/ с кодом приложения.
+name: rental
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: rental
+      POSTGRES_USER: rental
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "rental", "-d", "rental"]
+      interval: 2s
+      retries: 15
+    restart: unless-stopped
+    # Порт не публикуется: БД доступна только контейнеру web.
+
+  web:
+    build: ./src
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env}
+      DEBUG: "false"
+      ALLOWED_HOSTS: ${DOMAIN:?set DOMAIN in .env}
+      CSRF_TRUSTED_ORIGINS: https://${DOMAIN}
+      SECURE_COOKIES: "true"
+      DB_NAME: rental
+      DB_USER: rental
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: "5432"
+    volumes:
+      - media:/app/media
+    # Только loopback: снаружи приложение доступно через Apache (deploy/apache-rental.conf).
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8210}:8000"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  media:

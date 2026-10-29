@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Нет доступа{% endblock %}
+{% block content %}
+<div class="empty">
+  <h1>Нет доступа</h1>
+  <p>Эта страница доступна только пользователям с нужной ролью.</p>
+  <a class="btn" href="{% url 'catalog:index' %}">В каталог</a>
+</div>
+{% endblock %}

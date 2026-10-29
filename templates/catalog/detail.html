@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}{{ e.name }}{% endblock %}
+{% block content %}
+<p class="small"><a href="{% url 'catalog:index' %}">← Каталог</a> · <a href="{% url 'catalog:index' %}?category={{ e.category.pk }}">{{ e.category }}</a></p>
+<div class="split">
+  <div>
+    <div class="photo">{% if e.photo %}<img src="{{ e.photo.url }}" alt="{{ e.name }}">{% else %}{% include '_ph.html' %}{% endif %}</div>
+    <p class="eyebrow" style="margin-top:18px">{{ e.category.get_group_display }} · {{ e.category }}</p>
+    <h1>{{ e.name }}</h1>
+    {% if e.description %}<p style="white-space:pre-line">{{ e.description }}</p>{% endif %}
+    <div class="facts">
+      <div class="fact"><b>{{ e.price_per_day|floatformat:"0g" }} ₽</b><span>за сутки</span></div>
+      <div class="fact"><b>{{ e.deposit|floatformat:"0g" }} ₽</b><span>залог за 1 шт.</span></div>
+      <div class="fact"><b>{{ e.working }} шт.</b><span>в парке</span></div>
+      <div class="fact"><b>×{{ rules.late_fee_multiplier|floatformat:"-2" }}</b><span>сутки просрочки</span></div>
+    </div>
+    {% if tiers %}
+    <h2>Скидки за срок</h2>
+    <div class="chips">{% for t in tiers %}<span class="chip">от {{ t.min_days }} сут. — −{{ t.percent }}%</span>{% endfor %}</div>
+    {% endif %}
+    <h2>Свободно на ближайшие 4 недели</h2>
+    <div class="calendar" aria-label="Свободные экземпляры по дням">
+      {% for h in weekdays %}<span class="calendar__head">{{ h }}</span>{% endfor %}
+      {% for d, free in calendar %}
+        {% if forloop.first %}{% for _ in calendar_pad %}<span></span>{% endfor %}{% endif %}
+        <span class="calendar__day{% if not free %} is-none{% elif free < e.working %} is-low{% endif %}" title="{{ d|date:'d E, l' }}: свободно {{ free }}"><b>{{ d|date:"j" }}</b>{{ free }} шт.</span>
+      {% endfor %}
+    </div>
+    <div class="legend"><span><i style="background:var(--green-soft)"></i>всё свободно</span><span><i style="background:var(--amber-soft)"></i>частично занято</span><span><i style="background:var(--red-soft)"></i>занято</span></div>
+  </div>
+
+  <aside class="card sticky" id="book">
+    <h2>Забронировать</h2>
+    {% if not e.working %}
+      <p class="notice">Сейчас нет исправных экземпляров — бронирование недоступно.</p>
+    {% elif user.is_authenticated and not user.is_client %}
+      <p class="muted">Бронируют клиенты. Сотрудники оформляют выдачу в разделе «Брони».</p>
+    {% else %}
+    <form method="post" action="{% url 'bookings:create' e.pk %}" novalidate data-quote="{% url 'catalog:api_quote' %}" data-equipment="{{ e.pk }}">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<ul class="errorlist nonfield">{% for err in form.non_field_errors %}<li>{{ err }}</li>{% endfor %}</ul>{% endif %}
+      <div class="grid-2">
+        <div class="field"><label for="{{ form.start_date.id_for_label }}">{{ form.start_date.label }}</label>{{ form.start_date }}{{ form.start_date.errors }}</div>
+        <div class="field"><label for="{{ form.end_date.id_for_label }}">{{ form.end_date.label }}</label>{{ form.end_date }}{{ form.end_date.errors }}</div>
+      </div>
+      <div class="field"><label for="{{ form.quantity.id_for_label }}">{{ form.quantity.label }}</label>{{ form.quantity }}{{ form.quantity.errors }}</div>
+      <div class="field"><label for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>{{ form.comment }}{{ form.comment.errors }}</div>
+      <div class="quote" data-quote-box aria-live="polite">
+        <dl>
+          <dt>Срок</dt><dd data-q="days">—</dd>
+          <dt>Цена за сутки</dt><dd>{{ e.price_per_day|floatformat:2 }} ₽</dd>
+          <dt>Скидка</dt><dd data-q="discount">—</dd>
+          <dt>Свободно на даты</dt><dd data-q="available">—</dd>
+          <dt>Залог</dt><dd data-q="deposit">—</dd>
+        </dl>
+        <dl class="total"><dt>К оплате за аренду</dt><dd data-q="total">—</dd></dl>
+        <p class="small" data-q="error" hidden></p>
+      </div>
+      {% if user.is_authenticated %}
+        <button class="btn btn--hivis btn--wide">Забронировать</button>
+      {% else %}
+        <a class="btn btn--hivis btn--wide" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Войти, чтобы забронировать</a>
+      {% endif %}
+      <p class="muted small">Бронь подтверждает менеджер. Оплата аренды и залог — при получении.</p>
+    </form>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

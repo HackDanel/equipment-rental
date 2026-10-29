@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Профиль{% endblock %}
+{% block content %}
+<div class="narrow card">
+  <h1>Профиль</h1>
+  <p class="muted">Логин: <b>{{ user.username }}</b> · роль: {{ user.get_role_display }}</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form }}
+    <button class="btn">Сохранить</button>
+  </form>
+</div>
+{% endblock %}

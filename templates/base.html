@@ -1,0 +1,62 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Прокат оборудования{% endblock %} · Снаряга</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+  {% block head %}{% endblock %}
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="logo" href="{% url 'catalog:index' %}"><span class="logo__mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M3 11.5V3h8.5L21 12.5 12.5 21z"/><circle cx="7.5" cy="7.5" r="1.6"/></svg></span>Снаряга</a>
+    <button class="nav-toggle" type="button" aria-label="Меню" aria-expanded="false" data-nav-toggle>☰</button>
+    <nav class="nav" data-nav>
+      {% with p=request.path %}
+      <a href="{% url 'catalog:index' %}"{% if p == '/' %} aria-current="page"{% endif %}>Каталог</a>
+      {% if user.is_authenticated %}
+        {% if user.is_client %}
+          <a href="{% url 'bookings:my' %}"{% if p == '/my/' %} aria-current="page"{% endif %}>Мои аренды</a>
+        {% else %}
+          <a href="{% url 'bookings:manager' %}"{% if '/manager/' in p %} aria-current="page"{% endif %}>Брони{% if nav_new_bookings %}<span class="nav-count" title="Ждут подтверждения">{{ nav_new_bookings }}</span>{% endif %}</a>
+          <a href="{% url 'inventory:summary' %}"{% if '/stock/' in p %} aria-current="page"{% endif %}>Склад</a>
+        {% endif %}
+        {% if user.is_admin_role %}
+          <a href="{% url 'dashboard:equipment' %}"{% if '/panel/' in p and p != '/panel/' %} aria-current="page"{% endif %}>Управление</a>
+          <a href="{% url 'dashboard:stats' %}"{% if p == '/panel/' %} aria-current="page"{% endif %}>Статистика</a>
+        {% endif %}
+        <span class="nav__user">
+          <a href="{% url 'accounts:profile' %}">{{ user.first_name|default:user.username }}</a>
+          <span class="nav__role">{% if user.is_admin_role %}админ{% else %}{{ user.get_role_display }}{% endif %}</span>
+          <form method="post" action="{% url 'accounts:logout' %}" class="inline">{% csrf_token %}<button class="linklike">Выйти</button></form>
+        </span>
+      {% else %}
+        <a href="{% url 'accounts:login' %}">Вход</a>
+        <a class="btn btn--hivis btn--small" href="{% url 'accounts:register' %}">Регистрация</a>
+      {% endif %}
+      {% endwith %}
+    </nav>
+  </div>
+</header>
+
+<main class="wrap main">
+  {% if messages %}
+    <div class="messages">
+      {% for m in messages %}<div class="msg msg--{{ m.tags }}" role="status">{{ m }}</div>{% endfor %}
+    </div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  <div class="wrap">Снаряга — прокат спортивного, туристического и строительного оборудования · учебный проект НКЭиВТ</div>
+</footer>
+<script src="{% static 'js/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Каталог{% endblock %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">Прокат посуточно · залог возвращается при сдаче</p>
+  <h1>Снаряжение для спорта, похода и стройки</h1>
+  <p>Выберите даты — каталог покажет только то, что свободно. Стоимость считается сразу, скидка за длинный срок — автоматически.</p>
+</section>
+
+<nav class="chips" aria-label="Направления">
+  <a class="chip{% if not form.group.value %} is-active{% endif %}" href="?">Всё</a>
+  {% for value, label in groups %}
+    <a class="chip{% if form.group.value == value %} is-active{% endif %}" href="?group={{ value }}">{{ label }}</a>
+  {% endfor %}
+</nav>
+
+<form method="get" class="filters" novalidate>
+  <div class="field field--wide"><label for="id_q">Поиск</label><input type="search" name="q" id="id_q" value="{{ form.q.value|default:'' }}" placeholder="Палатка, перфоратор, SUP…"></div>
+  <input type="hidden" name="group" value="{{ form.group.value|default:'' }}">
+  <div class="field"><label for="id_category">Категория</label>{{ form.category }}</div>
+  <div class="field"><label for="id_price_min">Цена/сутки от, ₽</label>{{ form.price_min }}</div>
+  <div class="field"><label for="id_price_max">до, ₽</label>{{ form.price_max }}{{ form.price_max.errors }}</div>
+  <div class="field"><label for="id_date_from">Свободно с</label>{{ form.date_from }}</div>
+  <div class="field"><label for="id_date_to">по</label>{{ form.date_to }}{{ form.date_to.errors }}</div>
+  <div class="field"><label for="id_sort">Сортировка</label>{{ form.sort }}</div>
+  <div class="field actions"><button class="btn">Показать</button>{% if request.GET %}<a href="?">Сбросить</a>{% endif %}</div>
+</form>
+
+{% if period %}<p class="muted small">Показаны позиции, свободные с {{ period.0|date:"d.m.Y" }} по {{ period.1|date:"d.m.Y" }}.</p>{% endif %}
+
+{% if page.object_list %}
+<div class="grid">
+  {% for e in page %}
+  <a class="tile" href="{% url 'catalog:detail' e.pk %}">
+    <div class="tile__img">
+      {% if e.photo %}<img src="{{ e.photo.url }}" alt="" loading="lazy">{% else %}{% include '_ph.html' %}{% endif %}
+      <span class="group tag-group">{{ e.category.get_group_display }}</span>
+    </div>
+    <div class="tile__body">
+      <span class="muted small">{{ e.category }}</span>
+      <span class="tile__name">{{ e.name }}</span>
+      <div class="tile__foot">
+        <span class="price">{{ e.price_per_day|floatformat:"0g" }} ₽ <small>/ сутки</small></span>
+        {% if period %}
+          <span class="badge badge--in_stock">свободно {{ e.free }}</span>
+        {% elif e.working %}
+          <span class="muted small">в парке {{ e.working }} шт.</span>
+        {% else %}
+          <span class="badge badge--plain">нет в наличии</span>
+        {% endif %}
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% include '_pagination.html' %}
+{% else %}
+<div class="empty">Ничего не нашлось. Попробуйте изменить фильтры или даты.</div>
+{% endif %}
+{% endblock %}

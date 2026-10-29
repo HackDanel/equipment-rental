@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}{{ unit.inventory_number }}{% endblock %}
+{% block content %}
+<p class="small"><a href="{% url 'inventory:units' %}?equipment={{ unit.equipment.pk }}">← {{ unit.equipment }}</a></p>
+<div class="split">
+  <section class="card">
+    <p class="eyebrow">Экземпляр</p>
+    <h1 class="mono">{{ unit.inventory_number }}</h1>
+    <dl class="kv">
+      <dt>Оборудование</dt><dd>{{ unit.equipment }}</dd>
+      <dt>Статус</dt><dd><span class="badge badge--{{ unit.status }}">{{ unit.get_status_display }}</span></dd>
+      <dt>Состояние</dt><dd>{{ unit.get_condition_display }}</dd>
+      <dt>Поступил</dt><dd>{{ unit.created_at|date:"d.m.Y" }}</dd>
+    </dl>
+    <h2>Журнал</h2>
+    <ol class="timeline">
+      {% for ev in events %}
+        <li><time>{{ ev.created_at|date:"d.m.Y H:i" }}</time><b>{{ ev.get_kind_display }}</b> · {{ ev.get_condition_display|lower }}
+          {% if ev.booking %} · <a href="{% url 'bookings:detail' ev.booking.pk %}">бронь №{{ ev.booking.pk }}</a>{% endif %}
+          {% if ev.author %}<span class="muted small"> — {{ ev.author }}</span>{% endif %}
+          {% if ev.comment %}<br><span class="small">{{ ev.comment }}</span>{% endif %}</li>
+      {% empty %}<li class="muted">Событий нет.</li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <aside class="stack sticky">
+    {% if unit.status == 'in_stock' %}
+    <section class="card">
+      <h2>В ремонт</h2>
+      <form method="post" action="{% url 'inventory:to_repair' unit.pk %}">{% csrf_token %}{{ repair_form }}<button class="btn btn--wide">Отправить в ремонт</button></form>
+    </section>
+    {% endif %}
+    {% if unit.status == 'repair' %}
+    <section class="card">
+      <h2>Вернуть из ремонта</h2>
+      <form method="post" action="{% url 'inventory:from_repair' unit.pk %}">{% csrf_token %}{{ from_repair_form }}<button class="btn btn--hivis btn--wide">Вернуть на склад</button></form>
+    </section>
+    {% endif %}
+    {% if unit.status != 'written_off' %}
+    <section class="card">
+      <h2>Состояние</h2>
+      <form method="post" action="{% url 'inventory:condition' unit.pk %}">{% csrf_token %}{{ condition_form }}<button class="btn btn--ghost btn--wide">Сохранить</button></form>
+    </section>
+    {% if user.is_admin_role and unit.status != 'rented' %}
+    <section class="card">
+      <h2>Списание</h2>
+      <form method="post" action="{% url 'inventory:write_off' unit.pk %}" data-confirm="Списать {{ unit.inventory_number }}? Действие необратимо.">{% csrf_token %}{{ writeoff_form }}<button class="btn btn--danger btn--wide">Списать</button></form>
+    </section>
+    {% endif %}
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Бронь №{{ b.pk }}{% endblock %}
+{% block content %}
+<p class="small">{% if is_staff %}<a href="{% url 'bookings:manager' %}">← Брони</a>{% else %}<a href="{% url 'bookings:my' %}">← Мои аренды</a>{% endif %}</p>
+<div class="split">
+  <div class="stack">
+    <section class="card ticket">
+      <div class="ticket__head">
+        <div><span class="ticket__no">Бронь №{{ b.pk }} · создана {{ b.created_at|date:"d.m.Y H:i" }}</span>
+          <h1 style="margin-top:4px"><a href="{% url 'catalog:detail' b.equipment.pk %}" style="color:inherit">{{ b.equipment }}</a></h1></div>
+        {% include '_badge.html' %}
+      </div>
+      {% if b.is_overdue %}<p class="notice notice--red">Срок возврата прошёл {{ b.end_date|date:"d.m.Y" }}. Просрочено {{ b.overdue_days }} сут.{% if late_fee %} — штраф при возврате сегодня: <b class="mono">{{ late_fee|floatformat:"2g" }} ₽</b>{% endif %}.</p>{% endif %}
+      <dl class="kv">
+        <dt>Период</dt><dd class="mono">{{ b.start_date|date:"d.m.Y" }} — {{ b.end_date|date:"d.m.Y" }} ({{ b.days }} сут.)</dd>
+        <dt>Количество</dt><dd>{{ b.quantity }} шт.</dd>
+        <dt>Цена за сутки</dt><dd class="mono">{{ b.price_per_day|floatformat:"2g" }} ₽</dd>
+        {% if b.discount_percent %}<dt>Скидка за срок</dt><dd>{{ b.discount_percent }}%</dd>{% endif %}
+        <dt>Стоимость аренды</dt><dd class="mono"><b>{{ b.price_total|floatformat:"2g" }} ₽</b></dd>
+        <dt>Залог</dt><dd class="mono">{{ b.deposit|floatformat:"2g" }} ₽</dd>
+        {% if is_staff %}<dt>Клиент</dt><dd>{{ b.client }} · {{ b.client.phone|default:b.client.email }}</dd>{% endif %}
+        {% if b.manager %}<dt>Менеджер</dt><dd>{{ b.manager }}</dd>{% endif %}
+        {% if b.comment %}<dt>Комментарий</dt><dd>{{ b.comment }}</dd>{% endif %}
+      </dl>
+      {% if not is_staff and b.status == 'new' or not is_staff and b.status == 'confirmed' %}
+        <form method="post" action="{% url 'bookings:cancel' b.pk %}" data-confirm="Отменить бронь №{{ b.pk }}?" style="margin-top:18px">{% csrf_token %}<button class="btn btn--ghost btn--small">Отменить бронь</button></form>
+      {% endif %}
+    </section>
+
+    {% if b.items.all %}
+    <section class="card">
+      <h2>Выданные экземпляры</h2>
+      <div class="table-wrap cards"><table>
+        <thead><tr><th>Инв. номер</th><th>При выдаче</th><th>При возврате</th><th>Отметка</th></tr></thead>
+        <tbody>{% for i in b.items.all %}
+          <tr><td data-label="Инв. номер" class="mono">{% if is_staff %}<a href="{% url 'inventory:unit' i.unit.pk %}">{{ i.unit.inventory_number }}</a>{% else %}{{ i.unit.inventory_number }}{% endif %}</td>
+            <td data-label="При выдаче">{{ i.get_condition_out_display }}</td>
+            <td data-label="При возврате">{% if i.lost %}<span class="badge badge--damaged">утерян</span>{% else %}{{ i.get_condition_in_display|default:"—" }}{% endif %}</td>
+            <td data-label="Отметка">{{ i.note|default:"" }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+    </section>
+    {% endif %}
+
+    {% if b.fines.all %}
+    <section class="card">
+      <h2>Штрафы</h2>
+      <div class="table-wrap cards"><table>
+        <thead><tr><th>Вид</th><th>Основание</th><th class="num">Сумма</th><th>Оплата</th></tr></thead>
+        <tbody>{% for f in b.fines.all %}
+          <tr><td data-label="Вид">{{ f.get_kind_display }}</td><td data-label="Основание" class="small">{{ f.comment }}</td>
+            <td data-label="Сумма" class="num">{{ f.amount|floatformat:"2g" }} ₽</td>
+            <td data-label="Оплата">{% if f.is_paid %}<span class="badge badge--issued">оплачен</span>{% else %}<span class="badge badge--overdue">не оплачен</span>{% endif %}
+              {% if is_staff %}<form method="post" action="{% url 'bookings:fine_paid' f.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="paid" value="{% if f.is_paid %}0{% else %}1{% endif %}"><button class="linklike small">{% if f.is_paid %}снять отметку{% else %}отметить оплату{% endif %}</button></form>{% endif %}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+    </section>
+    {% endif %}
+
+    {% if is_staff and return_form %}
+    <section class="card" id="return">
+      <h2>Приём оборудования</h2>
+      <p class="muted small">Отметьте состояние каждого экземпляра. Повреждённые уходят в ремонт, утерянные списываются со штрафом {{ b.equipment.replacement_cost|floatformat:"0g" }} ₽.
+        {% if late_fee %}Штраф за просрочку <b class="mono">{{ late_fee|floatformat:"2g" }} ₽</b> начислится автоматически.{% endif %}</p>
+      <form method="post" action="{% url 'bookings:return' b.pk %}" novalidate data-confirm="Принять оборудование по брони №{{ b.pk }}?">
+        {% csrf_token %}
+        {% if return_form.non_field_errors %}<ul class="errorlist nonfield">{% for err in return_form.non_field_errors %}<li>{{ err }}</li>{% endfor %}</ul>{% endif %}
+        {% for item, fields in return_form.rows %}
+        <div class="unit-row">
+          <div><span class="mono"><b>{{ item.unit.inventory_number }}</b></span><br><span class="muted small">выдан: {{ item.get_condition_out_display|lower }}</span></div>
+          {% for f in fields %}
+            <div class="field">{% if f.field.widget.input_type == 'checkbox' %}<label>{{ f }} {{ f.label }}</label>{% else %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% endif %}{{ f.errors }}</div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+        <div class="actions" style="margin-top:16px"><button class="btn btn--hivis">Принять возврат</button></div>
+      </form>
+    </section>
+    {% endif %}
+  </div>
+
+  <aside class="stack sticky">
+    {% if is_staff and b.status == 'new' %}
+    <section class="card">
+      <h2>Решение по брони</h2>
+      <form method="post" action="{% url 'bookings:confirm' b.pk %}">{% csrf_token %}<button class="btn btn--hivis btn--wide">Подтвердить</button></form>
+      <hr>
+      <form method="post" action="{% url 'bookings:reject' b.pk %}" novalidate>{% csrf_token %}{{ reject_form }}<button class="btn btn--ghost btn--wide">Отклонить</button></form>
+    </section>
+    {% endif %}
+
+    {% if is_staff and issue_form %}
+    <section class="card">
+      <h2>Выдача</h2>
+      {% if not can_issue_today %}<p class="notice">Выдача возможна с {{ b.start_date|date:"d.m.Y" }} по {{ b.end_date|date:"d.m.Y" }}.</p>{% endif %}
+      <form method="post" action="{% url 'bookings:issue' b.pk %}" novalidate>
+        {% csrf_token %}
+        <p class="muted small">Выберите {{ b.quantity }} шт. Состояние при выдаче зафиксируется автоматически.</p>
+        {% if issue_form.fields.units.queryset %}{{ issue_form.units }}{% else %}<p class="notice notice--red">На складе нет свободных экземпляров.</p>{% endif %}
+        <button class="btn btn--hivis btn--wide" style="margin-top:12px"{% if not can_issue_today %} disabled{% endif %}>Выдать</button>
+      </form>
+      <hr>
+      <form method="post" action="{% url 'bookings:reject' b.pk %}" novalidate>{% csrf_token %}<label for="rej" class="small"><b>Отменить подтверждённую бронь</b></label><input id="rej" name="reason" placeholder="Причина, например «клиент не пришёл»" required maxlength="255"><button class="btn btn--ghost btn--small" style="margin-top:8px">Отклонить</button></form>
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <h2>История</h2>
+      <ol class="timeline">
+        {% for h in b.history.all %}
+          <li><time>{{ h.created_at|date:"d.m H:i" }}</time>{{ h.get_status_display }}{% if h.author %} <span class="muted small">— {{ h.author }}</span>{% endif %}{% if h.comment %}<br><span class="small">{{ h.comment }}</span>{% endif %}</li>
+        {% endfor %}
+      </ol>
+    </section>
+  </aside>
+</div>
+{% endblock %}

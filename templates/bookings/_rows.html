@@ -1,0 +1,18 @@
+{% load humanize %}
+<div class="table-wrap cards">
+<table>
+  <thead><tr><th>№</th><th>Оборудование</th><th>Даты</th><th class="num">Шт.</th><th class="num">Сумма</th><th>Статус</th></tr></thead>
+  <tbody>
+  {% for b in rows %}
+    <tr{% if b.is_overdue %} class="is-overdue"{% endif %}>
+      <td data-label="№"><a class="mono" href="{% url 'bookings:detail' b.pk %}">{{ b.pk }}</a></td>
+      <td data-label="Оборудование"><a href="{% url 'bookings:detail' b.pk %}">{{ b.equipment }}</a></td>
+      <td data-label="Даты" class="mono">{{ b.start_date|date:"d.m" }}–{{ b.end_date|date:"d.m.Y" }}</td>
+      <td data-label="Шт." class="num">{{ b.quantity }}</td>
+      <td data-label="Сумма" class="num">{{ b.price_total|floatformat:"0g" }} ₽</td>
+      <td data-label="Статус">{% include '_badge.html' %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>

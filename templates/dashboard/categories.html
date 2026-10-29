@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Категории{% endblock %}
+{% block content %}
+{% include 'dashboard/_subnav.html' %}
+<div class="split">
+  <div>
+    <h1>Категории</h1>
+    <div class="table-wrap cards"><table>
+      <thead><tr><th>Название</th><th>Направление</th><th class="num">Позиций</th><th></th></tr></thead>
+      <tbody>{% for c in items %}
+        <tr><td data-label="Название"><a href="{% url 'dashboard:category_edit' c.pk %}">{{ c.name }}</a></td><td data-label="Направление">{{ c.get_group_display }}</td><td data-label="Позиций" class="num">{{ c.n }}</td>
+          <td>{% if not c.n %}<form method="post" action="{% url 'dashboard:category_delete' c.pk %}" class="inline" data-confirm="Удалить категорию «{{ c.name }}»?">{% csrf_token %}<button class="linklike small">удалить</button></form>{% endif %}</td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+  </div>
+  <aside class="card"><h2>Новая категория</h2><form method="post" novalidate>{% csrf_token %}{{ form }}<button class="btn">Добавить</button></form></aside>
+</div>
+{% endblock %}

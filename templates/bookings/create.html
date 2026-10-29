@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Бронирование: {{ e.name }}{% endblock %}
+{% block content %}
+<div class="narrow card">
+  <p class="small"><a href="{% url 'catalog:detail' e.pk %}">← {{ e.name }}</a></p>
+  <h1>Бронирование</h1>
+  <p class="muted">{{ e.name }} · {{ e.price_per_day|floatformat:0 }} ₽ / сутки</p>
+  <form method="post" novalidate data-quote="{% url 'catalog:api_quote' %}" data-equipment="{{ e.pk }}">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<ul class="errorlist nonfield">{% for err in form.non_field_errors %}<li>{{ err }}</li>{% endfor %}</ul>{% endif %}
+    <div class="grid-2">
+      <div class="field"><label for="{{ form.start_date.id_for_label }}">{{ form.start_date.label }}</label>{{ form.start_date }}{{ form.start_date.errors }}</div>
+      <div class="field"><label for="{{ form.end_date.id_for_label }}">{{ form.end_date.label }}</label>{{ form.end_date }}{{ form.end_date.errors }}</div>
+    </div>
+    <div class="field"><label for="{{ form.quantity.id_for_label }}">{{ form.quantity.label }}</label>{{ form.quantity }}{{ form.quantity.errors }}</div>
+    <div class="field"><label for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>{{ form.comment }}{{ form.comment.errors }}</div>
+    <div class="quote" data-quote-box aria-live="polite">
+      <dl>
+        <dt>Срок</dt><dd data-q="days">—</dd>
+        <dt>Скидка</dt><dd data-q="discount">—</dd>
+        <dt>Свободно на даты</dt><dd data-q="available">—</dd>
+        <dt>Залог</dt><dd data-q="deposit">—</dd>
+      </dl>
+      <dl class="total"><dt>К оплате за аренду</dt><dd data-q="total">—</dd></dl>
+      <p class="small" data-q="error" hidden></p>
+    </div>
+    <button class="btn btn--hivis btn--wide">Забронировать</button>
+  </form>
+</div>
+{% endblock %}

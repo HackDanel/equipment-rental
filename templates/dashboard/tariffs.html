@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Тарифы и правила{% endblock %}
+{% block content %}
+{% include 'dashboard/_subnav.html' %}
+<h1>Тарифы и правила</h1>
+<div class="split">
+  <div class="stack">
+    <section class="card">
+      <h2>Скидки за срок аренды</h2>
+      <p class="muted small">Применяется самая большая подходящая скидка. Изменения не затрагивают уже созданные брони.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Срок</th><th class="num">Скидка</th><th></th></tr></thead>
+        <tbody>{% for t in tiers %}<tr><td>от {{ t.min_days }} сут.</td><td class="num">{{ t.percent }}%</td><td><form method="post" action="{% url 'dashboard:tier_delete' t.pk %}" class="inline">{% csrf_token %}<button class="linklike small">удалить</button></form></td></tr>
+        {% empty %}<tr><td colspan="3" class="muted">Скидок нет.</td></tr>{% endfor %}</tbody>
+      </table></div>
+      <form method="post" class="row-form" style="margin-top:14px" novalidate>{% csrf_token %}
+        <input type="number" name="min_days" placeholder="от, суток" min="2" max="365" aria-label="От, суток">
+        <input type="number" name="percent" placeholder="скидка, %" min="1" max="50" aria-label="Скидка, %">
+        <button class="btn btn--small" name="add_tier" value="1">Добавить</button>
+      </form>
+      {% for f in tier_form %}{{ f.errors }}{% endfor %}{{ tier_form.non_field_errors }}
+    </section>
+    <section class="card">
+      <h2>Цены за сутки</h2>
+      <div class="table-wrap cards"><table>
+        <thead><tr><th>Оборудование</th><th class="num">Сутки</th><th class="num">Залог</th><th class="num">Возмещение</th></tr></thead>
+        <tbody>{% for e in prices %}<tr><td data-label="Оборудование"><a href="{% url 'dashboard:equipment_edit' e.pk %}">{{ e.name }}</a></td><td data-label="Сутки" class="num">{{ e.price_per_day|floatformat:"0g" }} ₽</td><td data-label="Залог" class="num">{{ e.deposit|floatformat:"0g" }} ₽</td><td data-label="Возмещение" class="num">{{ e.replacement_cost|floatformat:"0g" }} ₽</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </section>
+  </div>
+  <aside class="card sticky">
+    <h2>Правила проката</h2>
+    <form method="post" novalidate>{% csrf_token %}{{ rules_form }}<button class="btn" name="save_rules" value="1">Сохранить</button></form>
+  </aside>
+</div>
+{% endblock %}

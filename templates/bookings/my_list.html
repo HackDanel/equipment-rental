@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Мои аренды{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><p class="eyebrow">Личный кабинет</p><h1>Мои аренды</h1></div>
+  <a class="btn btn--hivis" href="{% url 'catalog:index' %}">Забронировать ещё</a>
+</div>
+
+{% if unpaid %}
+<div class="notice notice--red" style="margin-bottom:20px">
+  Неоплаченные штрафы: <b class="mono">{{ unpaid_total|floatformat:"2g" }} ₽</b>.
+  {% for f in unpaid %}<a href="{% url 'bookings:detail' f.booking_id %}">бронь №{{ f.booking_id }}</a> — {{ f.get_kind_display|lower }}{% if not forloop.last %}; {% endif %}{% endfor %}.
+  Оплатить можно в пункте проката.
+</div>
+{% endif %}
+
+<h2>Текущие брони</h2>
+{% if current %}{% with rows=current %}{% include 'bookings/_rows.html' %}{% endwith %}
+{% else %}<div class="empty">Активных броней нет. <a href="{% url 'catalog:index' %}">Выбрать оборудование</a></div>{% endif %}
+
+<h2>История аренд</h2>
+{% if history %}{% with rows=history %}{% include 'bookings/_rows.html' %}{% endwith %}
+{% else %}<p class="muted">Здесь появятся завершённые и отменённые брони.</p>{% endif %}
+{% endblock %}

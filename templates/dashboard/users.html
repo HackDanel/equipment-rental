@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Клиенты{% endblock %}
+{% block content %}
+{% include 'dashboard/_subnav.html' %}
+<div class="page-head"><h1>Клиенты</h1></div>
+<form method="get" class="row-form" style="margin-bottom:18px"><input type="search" name="q" value="{{ q }}" placeholder="Фамилия, логин, e-mail, телефон"><button class="btn btn--small">Найти</button></form>
+<div class="table-wrap cards"><table>
+  <thead><tr><th>Клиент</th><th>Контакты</th><th class="num">Броней</th><th class="num">Неопл. штрафов</th><th>Доступ</th><th></th></tr></thead>
+  <tbody>{% for u in page %}
+    <tr><td data-label="Клиент">{{ u }}<br><span class="mono small muted">{{ u.username }}</span></td><td data-label="Контакты" class="small">{{ u.email }}<br>{{ u.phone }}</td>
+      <td data-label="Броней" class="num">{{ u.n }}</td><td data-label="Неопл. штрафов" class="num">{{ u.unpaid }}</td>
+      <td data-label="Доступ">{% if u.is_active %}активен{% else %}<span class="badge badge--damaged">заблокирован</span>{% endif %}</td>
+      <td class="actions">
+        <form method="post" action="{% url 'dashboard:user_toggle' u.pk %}" class="inline" data-confirm="{% if u.is_active %}Заблокировать{% else %}Разблокировать{% endif %} {{ u }}?">{% csrf_token %}<button class="linklike small">{% if u.is_active %}заблокировать{% else %}разблокировать{% endif %}</button></form>
+        <form method="post" action="{% url 'dashboard:user_promote' u.pk %}" class="inline" data-confirm="Сделать {{ u }} менеджером?">{% csrf_token %}<button class="linklike small">в менеджеры</button></form>
+      </td></tr>
+  {% empty %}<tr><td colspan="6" class="muted">Клиентов не найдено.</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% include '_pagination.html' %}
+{% endblock %}

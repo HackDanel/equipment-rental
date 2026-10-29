@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Сотрудники{% endblock %}
+{% block content %}
+{% include 'dashboard/_subnav.html' %}
+<div class="page-head"><h1>Сотрудники</h1><a class="btn btn--hivis" href="{% url 'dashboard:staff_new' %}">+ Новый сотрудник</a></div>
+<div class="table-wrap cards"><table>
+  <thead><tr><th>Сотрудник</th><th>Логин</th><th>Роль</th><th>Контакты</th><th class="num">Броней оформил</th><th>Доступ</th></tr></thead>
+  <tbody>{% for s in staff %}
+    <tr><td data-label="Сотрудник"><a href="{% url 'dashboard:staff_edit' s.pk %}">{{ s }}</a></td><td data-label="Логин" class="mono">{{ s.username }}</td>
+      <td data-label="Роль">{% if s.is_superuser %}Администратор (суперпользователь){% else %}{{ s.get_role_display }}{% endif %}</td>
+      <td data-label="Контакты" class="small">{{ s.email }}<br>{{ s.phone }}</td><td data-label="Броней оформил" class="num">{{ s.handled }}</td>
+      <td data-label="Доступ">{% if s.is_active %}активен{% else %}<span class="badge badge--damaged">отключён</span>{% endif %}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% endblock %}

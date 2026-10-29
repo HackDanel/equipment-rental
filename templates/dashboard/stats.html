@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+{% block title %}Статистика{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><p class="eyebrow">Панель администратора</p><h1>Статистика проката</h1></div>
+  <a class="btn btn--ghost" href="{% url 'dashboard:equipment' %}">Управление</a>
+</div>
+<div class="kpis">
+  <div class="kpi"><b>{{ kpi.revenue_month|floatformat:"0g" }} ₽</b><span>выручка за текущий месяц</span></div>
+  <div class="kpi"><b>{{ kpi.active }}</b><span>аренд на руках</span></div>
+  <div class="kpi"><b>{{ kpi.new }}</b><span>броней ждут подтверждения</span></div>
+  <div class="kpi{% if kpi.overdue %} kpi--alert{% endif %}"><b>{{ kpi.overdue }}</b><span>просрочено сейчас</span></div>
+  <div class="kpi"><b>{{ kpi.fleet_load }}%</b><span>исправного парка в аренде</span></div>
+  <div class="kpi"><b>{{ kpi.late_share }}%</b><span>возвратов с просрочкой</span></div>
+  <div class="kpi{% if kpi.unpaid %} kpi--alert{% endif %}"><b>{{ kpi.unpaid|floatformat:"0g" }} ₽</b><span>неоплаченных штрафов</span></div>
+  <div class="kpi"><b>{{ kpi.repair }}</b><span>экземпляров в ремонте</span></div>
+</div>
+
+<div class="charts">
+  <section class="card chart-card"><h2>Выручка и штрафы по месяцам</h2><p>Аренда — по дате начала выданных броней, штрафы — по дате начисления, ₽</p><div class="chart"><canvas id="ch-revenue" role="img" aria-label="Выручка и штрафы по месяцам"></canvas></div></section>
+  <section class="card chart-card"><h2>Брони по месяцам</h2><p>Все брони по дате начала аренды</p><div class="chart"><canvas id="ch-bookings" role="img" aria-label="Количество броней по месяцам"></canvas></div></section>
+  <section class="card chart-card"><h2>Самое доходное оборудование</h2><p>Выручка за всё время, ₽</p><div class="chart"><canvas id="ch-top" role="img" aria-label="Топ оборудования по выручке"></canvas></div></section>
+  <section class="card chart-card"><h2>Загрузка парка за 30 дней</h2><p>Доля экземпляро-суток в аренде по направлениям, %</p><div class="chart"><canvas id="ch-util" role="img" aria-label="Загрузка парка по направлениям"></canvas></div></section>
+  <section class="card chart-card"><h2>Брони по статусам</h2><p>Текущее состояние всех броней</p><div class="chart"><canvas id="ch-statuses" role="img" aria-label="Брони по статусам"></canvas></div></section>
+  <section class="card chart-card"><h2>Штрафы по видам</h2><p>Начислено за всё время, ₽</p><div class="chart"><canvas id="ch-fines" role="img" aria-label="Штрафы по видам"></canvas></div></section>
+</div>
+
+<details class="card" style="margin-top:18px">
+  <summary>Данные графиков таблицей</summary>
+  <div class="table-wrap" style="margin-top:12px"><table>
+    <thead><tr><th>Месяц</th><th class="num">Броней</th><th class="num">Аренда, ₽</th><th class="num">Штрафы, ₽</th></tr></thead>
+    <tbody>{% for row in table %}<tr><td>{{ row.0 }}</td><td class="num">{{ row.1 }}</td><td class="num">{{ row.2|floatformat:"0g" }}</td><td class="num">{{ row.3|floatformat:"0g" }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</details>
+{{ charts|json_script:"stats-data" }}
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/stats.js' %}"></script>
+{% endblock %}

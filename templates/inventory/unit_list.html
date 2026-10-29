@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Экземпляры{% endblock %}
+{% block content %}
+<p class="small"><a href="{% url 'inventory:summary' %}">← Склад</a></p>
+<div class="page-head"><div><h1>Экземпляры{% if equipment %}: {{ equipment }}{% endif %}</h1></div></div>
+<form method="get" class="filters">
+  {% if equipment %}<input type="hidden" name="equipment" value="{{ equipment.pk }}">{% endif %}
+  <div class="field field--wide"><label for="id_q">{{ form.q.label }}</label>{{ form.q }}</div>
+  <div class="field"><label for="id_status">{{ form.status.label }}</label>{{ form.status }}</div>
+  <div class="field"><label for="id_condition">{{ form.condition.label }}</label>{{ form.condition }}</div>
+  <div class="field"><button class="btn">Показать</button></div>
+</form>
+<div class="table-wrap cards">
+<table>
+  <thead><tr><th>Инв. номер</th><th>Оборудование</th><th>Состояние</th><th>Статус</th><th>Примечание</th></tr></thead>
+  <tbody>
+  {% for u in page %}
+    <tr>
+      <td data-label="Инв. номер" class="mono"><a href="{% url 'inventory:unit' u.pk %}">{{ u.inventory_number }}</a></td>
+      <td data-label="Оборудование">{{ u.equipment }}</td>
+      <td data-label="Состояние">{% if u.condition == 'damaged' %}<span class="badge badge--damaged">{{ u.get_condition_display }}</span>{% else %}{{ u.get_condition_display }}{% endif %}</td>
+      <td data-label="Статус"><span class="badge badge--{{ u.status }}">{{ u.get_status_display }}</span></td>
+      <td data-label="Примечание" class="small">{{ u.notes }}</td>
+    </tr>
+  {% empty %}<tr><td colspan="5" class="muted">Ничего не найдено.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% include '_pagination.html' %}
+{% endblock %}
