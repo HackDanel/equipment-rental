@@ -1,0 +1,22 @@
+stateDiagram-v2
+  direction LR
+  [*] --> new : клиент бронирует
+  new --> confirmed : менеджер подтверждает
+  new --> rejected : менеджер отклоняет
+  new --> cancelled : клиент отменяет
+  confirmed --> issued : выдача экземпляров
+  confirmed --> cancelled : клиент отменяет
+  confirmed --> rejected : клиент не пришёл
+  issued --> returned : приём, штрафы
+  issued --> overdue : end_date прошла
+  overdue --> returned : приём + штраф за просрочку
+  returned --> [*]
+  cancelled --> [*]
+  rejected --> [*]
+  new : Ожидает подтверждения
+  confirmed : Забронировано
+  issued : Выдано
+  overdue : Просрочено (вычисляется)
+  returned : Возвращено
+  cancelled : Отменено клиентом
+  rejected : Отклонено

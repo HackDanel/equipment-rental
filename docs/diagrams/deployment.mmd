@@ -1,0 +1,12 @@
+flowchart LR
+  user["Пользователь"] -- "HTTPS 443" --> apache
+  subgraph server["Сервер b450 · Debian 13"]
+    apache["Apache 2.4<br/>TLS: Let's Encrypt<br/>обратный прокси"] -- "http 127.0.0.1:8210" --> web
+    subgraph compose["Docker Compose: rental"]
+      web["web: Gunicorn, 3 воркера<br/>Django + WhiteNoise"] -- "5432" --> db[("db: PostgreSQL 17")]
+      web --- vmedia[("том media")]
+      db --- vpg[("том pgdata")]
+    end
+    backup["backup.sh: pg_dump + архив media"] -.-> compose
+  end
+  dev["Ноутбук разработчика"] -- "deploy.sh: rsync, docker compose up" --> server

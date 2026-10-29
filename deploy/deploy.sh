@@ -11,7 +11,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 ssh "$HOST" "mkdir -p $DIR/src"
 rsync -az --delete \
   --exclude .git --exclude .venv --exclude .env --exclude db.sqlite3 --exclude media \
-  --exclude staticfiles --exclude docs --exclude deploy --exclude '__pycache__' \
+  --exclude staticfiles --exclude docs --exclude deploy --exclude e2e --exclude '__pycache__' \
   "$ROOT/" "$HOST:$DIR/src/"
 rsync -az "$ROOT/deploy/docker-compose.prod.yml" "$HOST:$DIR/docker-compose.yml"
 rsync -az "$ROOT/deploy/apache-rental.conf" "$ROOT/deploy/backup.sh" "$HOST:$DIR/"

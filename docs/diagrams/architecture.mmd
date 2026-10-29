@@ -1,0 +1,21 @@
+flowchart LR
+  subgraph client[Браузер]
+    html[HTML + CSS]
+    js[JS: расчёт цены, графики Chart.js]
+  end
+  subgraph django[Django 6 · Gunicorn]
+    urls[URL-маршруты] --> views[Представления + декораторы ролей]
+    views --> forms[Формы: валидация ввода]
+    views --> svc[services.py: доступность, цена, штрафы, склад]
+    forms --> svc
+    svc --> orm[ORM-модели]
+    views --> tpl[Шаблоны]
+    api[/api/quote/ JSON/] --> svc
+  end
+  db[(PostgreSQL 17)]
+  media[[media: фото оборудования]]
+  html -- HTTP-запрос --> urls
+  js -- fetch --> api
+  tpl -- HTML-страница --> html
+  orm -- SQL, транзакции, SELECT FOR UPDATE --> db
+  views --> media

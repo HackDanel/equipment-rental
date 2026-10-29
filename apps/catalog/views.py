@@ -72,6 +72,10 @@ def _parse_date(value):
         return None
 
 
+# Кириллица в ответе без \uXXXX — так ответ читаем в Postman и в браузере.
+JSON = {'ensure_ascii': False}
+
+
 @require_GET
 def api_quote(request):
     """Расчёт стоимости и доступности для формы бронирования.
@@ -79,7 +83,7 @@ def api_quote(request):
     eq_id = request.GET.get('equipment', '')
     equipment = Equipment.objects.filter(pk=eq_id, is_active=True).first() if eq_id.isdigit() else None
     if equipment is None:
-        return JsonResponse({'ok': False, 'errors': {'equipment': 'Оборудование не найдено.'}}, status=404)
+        return JsonResponse({'ok': False, 'errors': {'equipment': 'Оборудование не найдено.'}}, status=404, json_dumps_params=JSON)
     start, end = _parse_date(request.GET.get('start')), _parse_date(request.GET.get('end'))
     qty = request.GET.get('qty', '1')
     errors = {}
@@ -90,10 +94,10 @@ def api_quote(request):
     if not qty.isdigit() or int(qty) < 1:
         errors['quantity'] = 'Количество должно быть целым числом от 1.'
     if errors:
-        return JsonResponse({'ok': False, 'errors': errors}, status=400)
+        return JsonResponse({'ok': False, 'errors': errors}, status=400, json_dumps_params=JSON)
     errors = services.validate_period(start, end)
     if errors:
-        return JsonResponse({'ok': False, 'errors': errors}, status=400)
+        return JsonResponse({'ok': False, 'errors': errors}, status=400, json_dumps_params=JSON)
     qty = int(qty)
     q = services.quote(equipment, start, end, qty)
     return JsonResponse({
@@ -106,4 +110,4 @@ def api_quote(request):
         'deposit': str(q.deposit),
         'available': q.available,
         'errors': {} if q.available >= qty else {'quantity': f'На эти даты свободно только {q.available} шт.'},
-    })
+    }, json_dumps_params=JSON)

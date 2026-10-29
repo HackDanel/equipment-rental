@@ -1,0 +1,119 @@
+erDiagram
+  accounts_user ||--o{ bookings_booking : "клиент (client_id)"
+  accounts_user |o--o{ bookings_booking : "менеджер (manager_id)"
+  catalog_category ||--o{ catalog_equipment : ""
+  catalog_equipment ||--o{ inventory_unit : "экземпляры"
+  catalog_equipment ||--o{ bookings_booking : ""
+  bookings_booking ||--o{ bookings_bookingitem : "выданные экземпляры"
+  inventory_unit ||--o{ bookings_bookingitem : ""
+  bookings_booking ||--o{ bookings_fine : ""
+  bookings_booking ||--o{ bookings_statuschange : ""
+  inventory_unit ||--o{ inventory_unitevent : "журнал"
+  bookings_booking |o--o{ inventory_unitevent : ""
+  accounts_user |o--o{ inventory_unitevent : "сотрудник"
+  accounts_user |o--o{ bookings_fine : "начислил"
+  accounts_user |o--o{ bookings_statuschange : "автор"
+
+  accounts_user {
+    bigint id PK
+    varchar username UK
+    varchar email UK
+    varchar password "хеш PBKDF2"
+    varchar first_name
+    varchar last_name
+    varchar phone
+    varchar role "client | manager | admin"
+    bool is_active
+  }
+  catalog_category {
+    bigint id PK
+    varchar name UK
+    varchar group "sport | tourism | building"
+  }
+  catalog_equipment {
+    bigint id PK
+    bigint category_id FK
+    varchar name
+    text description
+    varchar photo
+    decimal price_per_day "больше 0"
+    decimal deposit "не меньше 0"
+    decimal replacement_cost "не меньше 0"
+    bool is_active
+    timestamptz created_at
+  }
+  catalog_discounttier {
+    bigint id PK
+    smallint min_days UK "2..365"
+    smallint percent "1..50"
+  }
+  catalog_rentalsettings {
+    bigint id PK "всегда 1"
+    decimal late_fee_multiplier
+    smallint max_rental_days
+    smallint max_advance_days
+  }
+  inventory_unit {
+    bigint id PK
+    bigint equipment_id FK
+    varchar inventory_number UK
+    varchar condition "excellent | good | worn | damaged"
+    varchar status "in_stock | rented | repair | written_off"
+    varchar notes
+    timestamptz created_at
+  }
+  inventory_unitevent {
+    bigint id PK
+    bigint unit_id FK
+    varchar kind
+    varchar condition
+    bigint booking_id FK "NULL"
+    bigint author_id FK "NULL"
+    varchar comment
+    timestamptz created_at
+  }
+  bookings_booking {
+    bigint id PK
+    bigint client_id FK
+    bigint equipment_id FK
+    smallint quantity "не меньше 1"
+    date start_date
+    date end_date "не раньше start_date"
+    varchar status "new | confirmed | issued | returned | cancelled | rejected"
+    decimal price_per_day "цена на момент брони"
+    smallint discount_percent
+    decimal price_total
+    decimal deposit
+    varchar comment
+    bigint manager_id FK "NULL"
+    timestamptz created_at
+    timestamptz issued_at "NULL"
+    timestamptz returned_at "NULL"
+  }
+  bookings_bookingitem {
+    bigint id PK
+    bigint booking_id FK
+    bigint unit_id FK
+    varchar condition_out
+    varchar condition_in
+    bool lost
+    varchar note
+  }
+  bookings_fine {
+    bigint id PK
+    bigint booking_id FK
+    varchar kind "late | damage | loss"
+    decimal amount "больше 0"
+    varchar comment
+    bool is_paid
+    bigint created_by_id FK "NULL"
+    timestamptz created_at
+  }
+  bookings_statuschange {
+    bigint id PK
+    bigint booking_id FK
+    varchar status
+    bigint author_id FK "NULL"
+    varchar comment
+    timestamptz created_at
+  }

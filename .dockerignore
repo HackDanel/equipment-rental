@@ -7,3 +7,4 @@ staticfiles
 **/__pycache__
 docs
 deploy
+e2e

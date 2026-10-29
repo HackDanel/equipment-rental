@@ -1,0 +1,317 @@
+{
+  "info": {
+    "name": "Снаряга — API расчёта брони",
+    "description": "Проверка эндпоинта /api/quote/ (расчёт стоимости и доступности). Даты считаются от сегодняшнего дня в pre-request скрипте коллекции.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const d = new Date(); const iso = (n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };",
+          "pm.collectionVariables.set('start', iso(10)); pm.collectionVariables.set('end', iso(16)); pm.collectionVariables.set('yesterday', iso(-1));"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://rental.37.194.184.235.sslip.io"
+    },
+    {
+      "key": "equipment",
+      "value": "4"
+    },
+    {
+      "key": "start",
+      "value": ""
+    },
+    {
+      "key": "end",
+      "value": ""
+    },
+    {
+      "key": "yesterday",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Расчёт на 7 суток",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const d = pm.response.json();",
+              "pm.test('7 суток', () => pm.expect(d.days).to.eql(7));",
+              "pm.test('есть скидка за срок', () => pm.expect(d.discount_percent).to.be.above(0));",
+              "pm.test('итог = цена × сутки × (1 − скидка)', () => {",
+              "  const expected = Number(d.price_per_day) * d.days * (100 - d.discount_percent) / 100;",
+              "  pm.expect(Number(d.total)).to.be.closeTo(expected, 0.01);",
+              "});",
+              "pm.test('ответ быстрее 2 с', () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/quote/?equipment={{equipment}}&start={{start}}&end={{end}}&qty=1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "quote",
+            ""
+          ],
+          "query": [
+            {
+              "key": "equipment",
+              "value": "{{equipment}}"
+            },
+            {
+              "key": "start",
+              "value": "{{start}}"
+            },
+            {
+              "key": "end",
+              "value": "{{end}}"
+            },
+            {
+              "key": "qty",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Больше, чем есть экземпляров",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const d = pm.response.json();",
+              "pm.test('ok = false', () => pm.expect(d.ok).to.be.false);",
+              "pm.test('ошибка по количеству', () => pm.expect(d.errors).to.have.property('quantity'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/quote/?equipment={{equipment}}&start={{start}}&end={{end}}&qty=999",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "quote",
+            ""
+          ],
+          "query": [
+            {
+              "key": "equipment",
+              "value": "{{equipment}}"
+            },
+            {
+              "key": "start",
+              "value": "{{start}}"
+            },
+            {
+              "key": "end",
+              "value": "{{end}}"
+            },
+            {
+              "key": "qty",
+              "value": "999"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Дата в прошлом",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "pm.test('ошибка по дате начала', () => pm.expect(pm.response.json().errors).to.have.property('start_date'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/quote/?equipment={{equipment}}&start={{yesterday}}&end={{end}}&qty=1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "quote",
+            ""
+          ],
+          "query": [
+            {
+              "key": "equipment",
+              "value": "{{equipment}}"
+            },
+            {
+              "key": "start",
+              "value": "{{yesterday}}"
+            },
+            {
+              "key": "end",
+              "value": "{{end}}"
+            },
+            {
+              "key": "qty",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Неверный формат даты и количества",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400', () => pm.response.to.have.status(400));",
+              "const e = pm.response.json().errors;",
+              "pm.test('ошибки по дате и количеству', () => { pm.expect(e).to.have.property('start_date'); pm.expect(e).to.have.property('quantity'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/quote/?equipment={{equipment}}&start=завтра&end={{end}}&qty=0",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "quote",
+            ""
+          ],
+          "query": [
+            {
+              "key": "equipment",
+              "value": "{{equipment}}"
+            },
+            {
+              "key": "start",
+              "value": "завтра"
+            },
+            {
+              "key": "end",
+              "value": "{{end}}"
+            },
+            {
+              "key": "qty",
+              "value": "0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Несуществующее оборудование",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/quote/?equipment=999999&start={{start}}&end={{end}}&qty=1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "quote",
+            ""
+          ],
+          "query": [
+            {
+              "key": "equipment",
+              "value": "999999"
+            },
+            {
+              "key": "start",
+              "value": "{{start}}"
+            },
+            {
+              "key": "end",
+              "value": "{{end}}"
+            },
+            {
+              "key": "qty",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
